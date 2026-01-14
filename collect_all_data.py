@@ -13,7 +13,7 @@ def arcgis_rest_request(**kwargs):
     data = requests.get(rootURL).json()
     path = os.path.join(GLOBAL_CWD, "store_all_data")
     # Extract rows
-    with open(f"{path}//{filename}", "w", encoding="utf-8") as f:
+    with open(f"{path}//{filename}.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
 ArcREST_Enet_v2_afname = dict(
@@ -74,7 +74,21 @@ def zipped_getRequest(**kwargs):
     with ZipFile(os.path.join(GLOBAL_CWD, kwargs["zipfolder"]), 'r') as zipObj:
         zipObj.extractall(path)
 
+def direct_getRequest(**kwargs):
 
+    # If noverify is provided and truthy, set verify=False
+    if kwargs.get("noverify", False):
+        r = requests.get(kwargs["url"], verify=False)
+    else:
+        r = requests.get(kwargs["url"], verify=True)
+
+    r.raise_for_status()  # ensures valid response
+
+
+    response = requests.get(kwargs["url"])
+
+    with open(kwargs["store_location"], "wb") as f:
+        f.write(response.content)
 
 zipped_getRequest(
     **dict(url = "https://s3.transitpdf.com/files/derivatives/gtfs-nl/gtfs-nl-geojson.zip", 
@@ -96,3 +110,10 @@ zipped_getRequest(
     **dict(url = "https://atlas.brabant.nl/data_download/geopackage/777eb280-9c75-4d2a-a838-82b219ed454b.zip", 
            zipfolder = "777eb280-9c75-4d2a-a838-82b219ed454b.zip", noverify = "True"))
 
+direct_getRequest(
+    **dict(url = "https://www.vzinfo.nl/sites/default/files/2025-07/Locaties-SEH-AV-2025-RIVM.xlsx",
+           store_location = "Locaties-SEH-AV-2025-RIVM.xlsx",
+           noverify = "True"))
+
+#import from helper script
+#geolocator_fromxlxs(**dict(input = "Locaties-SEH-AV-2025-RIVM.xlsx", output_fn = "spoedeisende_hulp.gpkg"))
